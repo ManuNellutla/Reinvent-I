@@ -30,4 +30,11 @@ Edit nlpfeel/py, line number 25 to update path to where your 'style.css' is.
 -  ***streamlit run nlpfeel.py***
 - it should automatically open in browser. but in off chance copy the url from console.
 
+### Screenshots
+
+![Positive Text](Positive.png)
+
+![Negative Text](Negative.png)
+
+![Neutral Text](Neutral.png)
 

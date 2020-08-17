@@ -11,14 +11,18 @@ body {
 }
 
 .stTextInput>div>div>input {
+    color: ;
+}
+.stTextArea>div>textarea {
     color: #4F8BF9;
 }
-.stTextArea>div>div>textarea {
-    color: #4F8BF9;
+.stTextArea>label {
+    color: #fff;
+    font-size: 18px;
 }
 
-.material-icons.yellow { color: yellow; }
-.material-icons.red { color: red; }
-.material-icons.green { color: green; }
+.material-icons.yellow { color: orange; background-color: #fff;}
+.material-icons.red { color: red; background-color: #fff;}
+.material-icons.green { color: green; background-color: #fff;}
 .material-icons.md-48 { font-size: 48px; }
 
