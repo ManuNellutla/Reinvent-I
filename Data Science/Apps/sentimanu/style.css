@@ -1,0 +1,24 @@
+body {
+    color: #fff;
+    background-color: darkgray;
+}
+
+.stButton>button {
+    color: #4F8BF9;
+    border-radius: 30%;
+    height: 3em;
+    width: 4em;
+}
+
+.stTextInput>div>div>input {
+    color: #4F8BF9;
+}
+.stTextArea>div>div>textarea {
+    color: #4F8BF9;
+}
+
+.material-icons.yellow { color: yellow; }
+.material-icons.red { color: red; }
+.material-icons.green { color: green; }
+.material-icons.md-48 { font-size: 48px; }
+
