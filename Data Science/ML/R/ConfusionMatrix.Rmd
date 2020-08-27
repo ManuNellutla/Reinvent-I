@@ -1,0 +1,153 @@
+---
+title: "Confusion Matrix"
+author: "Manu Nellutla"
+date: "8/26/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Confusion Matrix
+
+Measuring a model by accuracy can be misleading as the data used to train and test can be baised or have a uneven representation of the desired population mix.
+
+To address this issue we often use **Confusion Matrix** to validate our models performance based on few additional metrics. But first a confusion matrix
+
+<br/>
+<style>
+table, th, td {
+  align: center;
+  border: 1px solid black;
+  padding: 5px;
+}
+td{
+  width:25%;
+}
+th{
+ background-color: lightgray;
+}
+.center {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.blue{
+ background-color:lightblue;
+}
+</style>
+
+<table width="500" class="center">
+<tr>
+  <th rowspan=2 colspan=2>$$n= TP+TN+FP+FN$$</th>
+  <th colspan=2> <center>Actual<center></th>
+</tr>
+<tr>
+  <td class="blue"><b>Yes</b></td>
+  <td class="blue"><b>No</b></td>
+</tr>
+<tr>
+  <th rowspan=2> Predicted</th>
+  <td class="blue"><b>Yes</b></td>
+  <td>TP</td>
+  <td>FP</td>
+</tr>
+ <td class="blue"><b>No</b></td>
+  <td>FN</td>
+  <td>TN</td>
+<tr>
+
+</tr>
+</table>
+
+<br/>
+
+
+```{r include=FALSE}
+cf <- matrix(c('TP','FN','FP','TN'), nrow=2, ncol=2)
+cf
+cf_df <- as.data.frame(cf,row.names = c('Yes','No'))
+names(cf_df)[1] <- 'Yes'
+names(cf_df)[2] <- 'No'
+knitr::kable(cf_df)
+```
+
+
+### Intro
+
+
+    population (n) = all rows = (TP + FP + TN + FN)
+
+
+- $Accuracy = \frac{(TP + TN)}{(TP + TN + FP + FN)}$ - proportion of correct classifications.
+
+- $Precision = \frac{TP}{TP+FP}$ - This is also called *'Pos Prediction'*
+
+- $Recall = \frac{TP}{TP+FN}$ - This is also called *'Sensitivity'*
+
+
+### load data
+
+```{r 'Get Data'}
+library(dslabs)
+data(heights)
+summary(heights)
+```
+
+### split dataset
+
+Using **caret.createDataPartion**
+[https://www.rdocumentation.org/packages/caret/versions/6.0-86/topics/createDataPartition]
+
+```{r 'split dataset'}
+library("caret")
+y = heights$sex
+X = heights$height
+set.seed(2, sample.kind = "Rounding")
+# split at 0,5 
+test_index = createDataPartition(y, times = 1, p = 0.5, list=FALSE)
+
+test_set = heights[test_index,] 
+train_set = heights[-test_index,]
+
+summary(test_set)
+
+summary(train_set)
+
+```
+
+
+### predic with best accuracy
+
+Now that we know the best cutoff height is 64 lets predict with new cutoff
+
+```{r}
+library(purrr)
+y_hat <- ifelse(test_set$height > 64, "Male", "Female") %>% factor(levels = levels(test_set$sex))
+y_hat <- factor(y_hat)
+mean(y_hat == test_set$sex)
+```
+
+### confusion matrix
+
+```{r}
+confusionMatrix(data=y_hat, reference=test_set$sex)
+```
+
+### Understanding results
+
+If you look at the results we understand that **accuracy is about 81%**. 
+
+That looks good. But is it?
+
+If you look at the "**Pos Prediction above it is 64%**". This is our actual precision which tells us that proportion of 'True Positives' are low.
+
+**Sensitivity/ Recall** is the proportion of correct classification for a class with in the population. 
+> *In the above table*: predicted female = 50; actual female = 119 (look at test set summary)
+  
+Why is this? it is because of the cutoff we chose. I chose to classify male if height > 64. However, the mean of female height is 65. This makes the model intutively wrong.
+
+But 'Male' height cutoff was calculated as $(\mu-2*sd)$ which is right based on our 95% CI. 
+
+What we can infer is that the **PREVALANCE** of the dataset, which means proportion of one class within the population, is uneven.. 
