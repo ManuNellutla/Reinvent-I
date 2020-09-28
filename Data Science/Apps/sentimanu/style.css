@@ -16,7 +16,17 @@ body {
 .stTextArea>div>textarea {
     color: #4F8BF9;
 }
+
+.stSelectbox>div>div>div {
+    color: #4F8BF9;
+}
+
 .stTextArea>label {
+    color: #fff;
+    font-size: 18px;
+}
+
+.stSelectbox>label {
     color: #fff;
     font-size: 18px;
 }
@@ -26,3 +36,12 @@ body {
 .material-icons.green { color: green; background-color: #fff;}
 .material-icons.md-48 { font-size: 48px; }
 
+.result{
+    color: #4F8BF9;
+    border-radius: 30%;
+}
+
+.element-container>div>div>div{
+    background-color : #fff;
+    radius: 30%;
+}
