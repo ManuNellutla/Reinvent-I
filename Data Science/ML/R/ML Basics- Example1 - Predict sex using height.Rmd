@@ -1,0 +1,196 @@
+---
+title: "ML Baseics - Example1"
+author: "Manu Nellutla"
+date: "8/24/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Example1 - Predict population Sex
+
+This Example exercise tries to "Predict Sex using height". Based on the titel we can infer that this is a classification example. We will be predicting our **outcome as 2 classes: "Male or Female"** on the basis of our **features/covariate:  "Height"**.
+
+We are  using a dataset which can be called labeled dataset which already has height and sex association.
+
+
+## Use library dslabs
+
+```{r dslabs}
+library(dslabs)
+library(dplyr)
+```
+
+## Heights Dataset
+
+From dslabs we load heights dataset.
+
+```{r 'heights dataset'}
+#load heights data set using 
+data(heights)
+summary(heights)
+```
+
+## Define our Parameters. Outcome (Y) and Predictors (X)
+
+Since we are predicting "sex(Male or Female)" this is our Y based on the predictor/Feature "heights" which is our X.
+
+
+```{r 'Define X and Y'}
+y = heights$sex
+X = heights$height
+
+```
+
+## ML Step 1: Split data into training and test.
+
+*'Caret'* library  is used for splitting the data using **createDataPartion** function. 
+
+
+```{r 'split dataset'}
+library("caret")
+set.seed(2, sample.kind = "Rounding")
+# split at 0,5 
+test_index = createDataPartition(y, times = 1, p = 0.5, list=FALSE)
+
+test_set = heights[test_index,] 
+train_set = heights[-test_index,]
+
+```
+## ML Step2: Predict sex 2 ways
+
+- Simple guessing without predictors (like a coin toss)
+- Using factors -> 'sex'
+
+
+```{r 'Algo1'}
+
+y_hat = sample(c("Male","Female"), length(test_index), replace = TRUE)
+table(y_hat)
+```
+```{r 'Algo2'}
+library(magrittr)
+y_hat2 <- sample(c("Male","Female"), length(test_index), replace = TRUE) %>%
+  factor(levels=levels(test_set$sex))
+table(y_hat2)
+```
+## ML Step3: Compute Accuracy
+
+- compage our guess with test set 'sex'
+
+```{r 'accuracy'}
+mean(y_hat == test_set$sex)
+```
+
+Less than 50%. Lets check the one with factors. Y_hat2
+
+```{r}
+mean(y_hat2 == test_set$sex)
+
+```
+About 50%. Not quite good. 
+
+### General intution: Males generally are taller than females
+
+We know males are generally taller than female. Can we use this information in anyway?
+One logic is: Predict male if height is within 2 standard deviations of avg height of male.
+
+#### Method 1: Plot hist and calculate
+Lets do this:
+- Separate male and female heights
+- plot a histogram with a mean on it.
+```{r 'compute stddev'}
+male_heights = heights$height[heights$sex == "Male"]
+female_heights = heights$height[heights$sex == "Female"]
+
+par(mfrow=c(1,2))
+
+hist(male_heights)
+mx = mean(male_heights)
+abline(v=mx, col="blue", lw=2)
+text(mx, 18 , round(mx, 2))
+hist(female_heights)
+fx = mean(female_heights)
+abline(v=fx, col="pink", lw=2)
+text(fx, 18, round(fx,2))
+
+```
+
+Now the aboe plots show: Mean of male heights = 69.31. our range is (mean-2* sd to mean+2*sd)
+
+```{r}
+mean(male_heights) - 2 * sd(male_heights)
+```
+ 
+62 is our 2 times dist lower end that we can use to say any height between this number is mostly male.
+
+#### Method 2: R piping command 
+
+Another slick way of doing this is by this aggregated function calling..
+
+ from heights dataset %>% group_by sex ( male, female) %>% get me MEAN of heights and Standard Deveation.
+
+```{r 'summary mean.sd'}
+
+heights %>% group_by(sex) %>% summarize(mean(height), sd(height))
+```
+
+If we calculate mean - 2 X SD (69.31 - 2 * 3.611) + 62.088.
+
+### adding intution to our algoritm 
+So we will add this intution to our algorithm
+
+```{r 'adding intution'}
+y_hat3 <- ifelse(X > 62, "Male", "Female") %>% factor(levels = levels(test_set$sex))
+mean(y == y_hat3)
+```
+
+WOW! We got about 20% more accuracy. So for male height > 62 we got about 80% accuracy. 
+
+## ML Step4:  Running multiple accuracy using cutoff heights
+Lets find accuracy numbers for each height between 61, 75 and plot them.
+```{r 'Cutoff accuracy'}
+library(purrr)
+cutoff <- seq(61,75)
+accuracy <- map_dbl(cutoff, function(x){
+  y_hat4 <- ifelse(train_set$height > x, "Male", "Female") %>%
+    factor(levels = levels(test_set$sex))
+  mean(y_hat4 == train_set$sex)
+})
+summary(accuracy)
+
+```
+
+As we see max accuracy is 83.6%
+
+### Plot accuracy
+
+```{r 'cutoff accuracy plot'}
+
+data.frame(cutoff, accuracy) %>% 
+  ggplot(aes(cutoff, accuracy)) + 
+  geom_point() + 
+  geom_line() 
+max(accuracy)
+```
+
+Best cutoff visually is at 64. Lets compute programatically
+
+```{r 'best cutoff'}
+best_cutoff <- cutoff[which.max(accuracy)]
+best_cutoff
+```
+
+## ML Step Final: Predic with best accuracy
+
+Now that we know the best cutoff height is 64 lets predict with new cutoff
+
+```{r}
+y_hat_final <- ifelse(test_set$height > best_cutoff, "Male", "Female") %>% factor(levels = levels(test_set$sex))
+y_hat_final <- factor(y_hat_final)
+mean(y_hat_final == test_set$sex)
+```
+
+Our training accuracy was 83.61% and testing accuracy is 81.71%. This is a good accuracy and is acceptable.
